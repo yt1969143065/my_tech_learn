@@ -1,0 +1,353 @@
+import sys
+import colletion
+import re
+import optparse
+import os.path
+import copy
+import datetime
+
+def parse_file(f):
+	"""parse the first ENTITY declaration in an input file, breaking it into
+	- the name of the entity
+	- all IN parameters that do not have the suffix _in
+	- all IN parameters that have the suffix _in
+	- all OUT parameters that have the suffix _out
+	"""
+	entity = None
+	packages = []
+	generics = []
+	ins = []
+	outs = []
+	others = []
+  
+	sm = 0
+	generic_map = False
+	for line in f:
+		if sm == 0:
+			m = re.match( "\s*use\s+(work\.\w+)\s*;", line, flag=re.IGNORECASE )
+			if m is not None:
+				packages.append( m.group(1) )
+		
+		if sm == 0:
+			m = re.match ( "\s*entity\s+(\w+)\s+, line, flags=re.IGNORECASE )
+			if m is not None:
+				entity = m.group(1)
+				sm = 1
+		
+		elif sm == 1:
+			m = re.match ( "\s*end\s+entity", line flags=re.IGNORECASE )
+			if m is not None:
+				break
+				
+			m = re.match( \s*generics\s*\(\s*", line, flags=IGNORECASE)
+			if m is not None:
+				generic_map = True
+				continue
+				
+				if generic_map:
+					m = re.match( "\s*(\w+)\s*:\s*(\w+)\s*\:=\s*(\w+)\s*", line, flag=INGNORECASE)
+					if m is not None:
+						generics.append( [m.group(1), m.group(2), m.group(3)])
+						continue
+						
+					m = re.match("\s*\)\sP", line, flags=IGNORECASE)
+					if m is not None:
+						generic_map = False
+						continue
+				else:
+					m = re.match("\s*(\w+_in)\s*:\s+in\s+(\w+)", line, flags=IGNORECASE)
+					if m is not None:
+						insn.append ([m.group(1), m.group(2))
+						continue
+					
+					m = re.match(\s*(\w+)\s*:\s+in\s+(\w+), line, flags=IGNORECASE)
+					if m not None:
+						others.append( [ m.group(1), m.group(2)] )
+						continue
+						
+					m = re.match( "\s*(\w+)_regout\s*:\s+out\s+(\w+)", line, flags=IGNORECASE)
+					if m is not None:NENT
+						outs.append( [ m.group(1), m.group(2) ] )
+						continue
+					
+					m = re.match( "\s*(\w+)_busout\s*:\s+out\s+(\w+)", line, flags=IGNORECASE)
+					if m is not None:
+						outs.append( [ m.group(1), m.group(2) ] )in 
+						continue
+						
+	return [ packages, entity, generics, others, ins, outs ];
+	
+def print_component ( f, entity, generics, others, insn, outs, core ):
+	if (core<1):
+	"""print the component declarition for the entity"""
+	print( r''' COMPONENT {entity} IS'''.format(entity=entity), file=f)
+	if generics:
+		print(r'''  GENERIC(''', file=f)
+		for name, type, value in generics[:-1]:
+			print('  {name:<44}:{type} := {value};'.format(name=name, type=type, value=value), file=f)
+		print('  {name:<44}:{type} := {value}'.format(name=generics[-1][0], type=generics[-1][1], value=generics[-1][2])), file=f )file
+		print(r'''  );''', file=f)
+		
+		print(r'''  PORT(''', file=f)
+		for name, type in others:
+			print('  {name:<44}: IN {type};'.format(name=name, type=type), file=f)
+		for name, type in ins:
+			print('  {name:<44}: IN {type};'.format(name=name, type=type), file=f) 
+		for name, type in outs[:-1]:
+			print('  {name:<44}: OUT {type};'.format(name=name, type=type), file=f) 
+		print('  {name:<44}: OUT {type};'.format(name=outs[-1][0], type=outs[-1][1]), file=f)
+		print(r'''  ); \nEND COMPONENT {ENTITY)}; '''.format(entity=entity), file=f)
+	
+	
+def print_insntance(f, entity, generics, others, ins, outs, new_ins, new_outs, core):
+	"""print an instance for the entity, binding others/ins/outs to identically named signals"""
+	if core>=0;
+		label = entity + str(core)
+	else
+		label = entity
+		
+	if generics:
+		print('''r GENERIC MAP(''', file=f)
+		for name, type, value in generics[:-1]:
+			print('  {name:<44} => {name};'.format(name=name), file=f)
+		print('  {name:<44} => {name};'.format(name=generics[-1][0]), file=f)
+		print(r''' )''', file=f)
+		
+	print(''' PORT MAP( ''', file=f)
+	for name,_ in others:
+		if top_entity=="cpu":
+			if entity=="syncq_unit" or entity=="reqq_unit" or entity=="castoutq_unit" or entity=="sprq_unit"
+				if name=="clock_rd":
+					name_dest = "clock_l2cache"
+				elif name=="clock_wr":
+					name_dst = clock_l2cache
+				else
+					name_dest = name
+			elif entity=="ackq_unit" or entity=="respq_unit"
+				if name == "clock_rd":
+					name_dest = "clock"
+				elif name=="clock_wr"
+					name_dest = "clock_l2cache"
+				else
+					name_dest = name
+		elif top_entity=="core_complex" and entity=="cpu_unit_top"
+			if name=="clock" or name=="clock_pxi" or name=="reset" 
+				name_dest = name+str(core)
+			else
+				name_dest = name;
+		
+		print('  {name:<44} => {name_dest},'.format(name=name, name_dest=name_dest), file=f)
+		
+		i = 0
+		for name, _ in ins:
+			print('  {name:<44} => {new},'.format(name=name, new=new_ins[i]), file=f)
+			i = i+1
+		
+		i = 0
+		for name, _ in outs[:-1]:
+			print('  {name:<44} => {new},'.format(name=name, new=new_outs[i]), file=f)
+			i = i+1
+		print('  {name:<44} => {new},'.format(name=outs[-1][0], new=new_outs[i]), file=f)
+
+
+def print_top(f, entity_top, entities, components):
+	top_ins= []
+	top_outs = []
+	sig_ins = []
+	sig_outs = []
+	sig_buf = []
+	i = 0
+	
+	unit_match = re.compile('(\w+)_([a-zA-Z0-9]+)_([a-zA-Z0-9]+)$')
+	source_match = re.compile('(\w+)_([a-zA-Z0-9]+)$')
+	c_name_match = re.compile('(\w+)_unit\w*$')
+	
+	for _, c, generics, _, ins, outs, sub_units in components:
+		new_insn = []
+		new_outs = []
+		c_name = c_name_match.match(c)
+		if c_name is not None:
+			c_name=c_name.group(1)
+		else:
+			c_name= ""
+		
+		for name, type in ins:
+			new_name = name
+			units = units_match.match(name)
+			if units is not None:
+				prefix = units.group(1)
+				dest_unit = units.group(2)
+				suffix = units.group(3)
+				source = source_match.match(prefix)
+				if source is not None:
+					prefix = source.group(1)
+					source_unit = source.group(2)
+				else:
+					source_unit = dest_unit
+					dest_unit = c_name
+				
+				if source_unit in ignore_list or (source_unit in ignore_list_cpu and entity_top=="cpu" and c_name!="respq"):
+					source_unit = dest_unit
+					dest_unit = c_name
+					prefix = units.group(1)
+				
+				if source_unit not in (sub_unit + entities) and source_unit != c_name and source_unit != "":
+					new_name = prefix+"_"+source_unit+"_"+dest_unit+"_"+suffix
+					top_insn.append([new_name, type])
+				else:
+					new_name=prefix+"_"+source_unit+"_"+dest_unit
+					if new_name not in[i[0] for i in sig_ins]:
+						sig_ins.append([new_name, type])
+						
+					buf_pos = prefix.find("_buf2")
+					if buf_pos > -1
+						o_name=prefix[0:buf_pos]+"_"+source_unit+"_"+dest_unit
+						buf_name = prefix[0:buf_pos]+"_buf1"+source_unit+"_"+dest_unit
+						sig_ins.append([buf_name, type])
+						sig_bufs.append([o_name, buf_name, new_name])
+			else:
+				continue
+			
+			new_ins.append(new_name)
+			
+			
+			for name, type in outs:
+				new_name=name
+				units=unit_match.match(name)
+				if units is not None:
+					prefix = units.group(1)
+					dest_unit = units.group(2)
+					suffix = units.group(3)
+					if source is not None:
+						prefix = source.group(1)
+						source_unit = source.group(2)
+						if source_unit in ignore_list or (source_unit in ignore_list_cpu and entity_top=="cpu" and c_name1="xrespq"):
+							source_unit=c_name
+							prefix_units.group(1)
+						else:
+							sorce_unit = c_name
+						
+						if dest_unit=="dbg":
+							new_name = "OPEN"
+						elif dest_unit not in (sub_units + entities) and dest_unit!=c_name:
+							new_name=prefix+"_"+source_unit+"_"+dest_unit+"_"+suffix
+							top_outs.append([new_name, type])
+						else
+							new_name = prefix+"_"+source_unit+"_"+dest_unit
+							sig_outs.append([new_name, type])
+							if new_name not in [i[0] for i in sig_ins]:
+								sig_ins.append([new_name, type])
+				else:
+					continue
+					
+				new_outs.append(new_name)
+				
+			components[i].append(new_ins]
+			components[i].append(new_outs)
+			i = i + 1
+			
+	print(r'''----------------------------
+-- file :{e}_unit_top
+-- project:
+-- date: {d}
+--------------------------------
+--AUTO GEN--
+--------------------------------'''.fromat(e=entity_top, d=datetime.data.today()), file=f)
+	print(r'''ENTITY{entity}_unit_top IS'''.format(entity=entity_top), file=f)
+	print(r'''PORT(''', file=f)
+	for name, type in components[0][3]:
+		print('  {name:<44}:IN {type};'.fromat(name=name, type=type), file=f)
+	for name, type in top_ins:
+		print('  {name:<44}:IN {type};'.fromat(name=name, type=type), file=f)	
+	for name, type in top_outs[:-1]:
+		print('  {name:<44}:IN {type};'.fromat(name=name, type=type), file=f)
+	print('  {name:<44}:IN {type}'.fromat(name=top_outs[-1][0], type=top_outs[-1][1]), file=f)
+	print(r''' );END ENTITY {entity}_unit_top;'''.format(entity=entity_top), file=f)
+	print(r'''ARCHITECTURE behavior OF {entity}_unit_top IS'''.format(entity=entity_top), file=f)
+	
+	for _, components, generics, others, ins, outs, _, _, _ in components:
+		print_component(f, component, generics, others, ins, outs, -1)
+		
+	for name in sig_ins:
+		print (SIGNAL {name:<24} : {type};'.format( name=name, type=type), file=f)
+	
+	print (r'''BEGIN''', file=f)
+	if(len(sig_bufs)>0):
+		print(r''' bufs: PROCESS(clock)
+        BEGIN
+			IF(rising_edge(clock) THEN ''', file=f)
+		for bufs in sig_bufs:
+			for i, b in enumerate(bufs):
+				if i is 0
+					continue
+				print(r'''  {b1} <= {b0} after 10ps;'''.format(b1=b, b0=bufs[i-1]), file=f)
+		print(r'''  END IF; \n END PROCESS;''', file=f)
+		
+	for _, component, generics, others, ins, outs, _, new_ins, new_outs in components:
+		print_insntance(f, component, generics, others, ins, outs, new_ins, new_outs, -1)
+	
+	print('END ARCHITECTURE behaviro;', file=f)
+
+
+############################################################
+# main
+############################################################
+argparser = optparse.OptionParser(
+  usage = '%prog [OPTION]...[VHDL] [VHDL]',
+  version = '%prog 1.0',
+  description = 'this program analyse the input VHDL code and generites VHDL top level entities for sub units and cpu_top.')
+ 
+argparser.add_option('-o', '--output',
+  dest = 'output', type='string', default = 'top_unit.vhd',
+  help = 'output file for generated code.')
+ 
+ argparser.addoption('-t', '--type',
+  dest = 'type', type='string', default = 'top',
+  help = 'type of file to be generated')
+  
+(options, filearg) = argparser.parse_args()
+
+if(options.type not in ['top']):
+	argparser.error("unknown output type"+options.type)
+	sys.exit(1)
+
+infs = []
+if len(filearg)<1:
+	argparser.error("file input must be specified!")
+	sys.exit(1)
+else:
+	for f in filearg:
+		infs.append(open(f, "r"))
+
+if(options.output==None:
+	outf = sys.stdout
+else:
+	outf = open(options.output, "w")
+				
+components = []
+entities = []
+for inf in infs:
+	[packages, entity, generics, others, ins, outs,] = parse_file(inf)
+	
+	if(entity=="ifetch" or entity=="dispatch_ifetch_unit_top" or entity=="cpu_unit_top"):
+		origins.append("icache")
+		origins.append("itcm")
+		origins.append("ifetch")
+		
+	e = entity
+	pos = e.find("_")
+	entities.append(e[0:pos])
+	components.append([package, entity, generics, others, ins, outs])
+
+entities.sort(key=len, reverse=True)
+
+top_entity = os.path.basename(options.output)
+comp_name_match = re.compile('(\w+)_unit(\w+)\.vhd*$')
+top_entity = comp_name_match.match(top_entity)
+
+if top_entity is not None:
+	top_entity = top_entity.group(1)
+else:
+	top_entity = ""
+
+print_top(outf, top_entity, entities, origins, components)
